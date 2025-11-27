@@ -1,11 +1,19 @@
 import streamlit as st
 import joblib
 import pandas as pd
+import pathlib
 
 st.set_page_config(page_title="House Price Predictor")
 
-# Load model
-model = joblib.load("house_price_rf_model.joblib")
+# Make sure we look for the model in the same folder as this file
+BASE_DIR = pathlib.Path(__file__).parent
+MODEL_PATH = BASE_DIR / "house_price_rf_model.joblib"
+
+if not MODEL_PATH.exists():
+    st.error(f"Model file not found at: {MODEL_PATH}")
+else:
+    model = joblib.load(MODEL_PATH)
+
 
 st.title("🏡 House Price Prediction App")
 st.write("Enter details below to predict median house price.")
@@ -40,3 +48,4 @@ st.write(input_data)
 if st.button("Predict Price"):
     prediction = model.predict(input_data)[0]
     st.success(f"Predicted House Price: ${prediction * 100000:,.2f}")
+
