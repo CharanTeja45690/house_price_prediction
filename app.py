@@ -1,23 +1,30 @@
 import streamlit as st
-import joblib
 import pandas as pd
-from pathlib import Path
+import numpy as np
+from sklearn.datasets import fetch_california_housing
+from sklearn.ensemble import RandomForestRegressor
 
 st.set_page_config(page_title="House Price Predictor", layout="wide")
 
-# ===== Load trained model =====
-BASE_DIR = Path(__file__).parent
-MODEL_PATH = BASE_DIR / "house_price_rf_model.joblib"
-
 @st.cache_resource
-def load_model():
-    # Load the already-trained RandomForest model
-    model = joblib.load(MODEL_PATH)
+def train_model():
+    """Load data and train a RandomForest model (runs only once)."""
+    data = fetch_california_housing(as_frame=True)
+    X = data.data
+    y = data.target  # MedHouseVal in $100k
+
+    model = RandomForestRegressor(
+        n_estimators=50,
+        max_depth=15,
+        random_state=42,
+        n_jobs=-1,
+    )
+    model.fit(X, y)
     return model
 
-model = load_model()
+model = train_model()
 
-# ===== UI =====
+# ----- UI -----
 st.sidebar.title("Input Features")
 
 MedInc = st.sidebar.number_input("Median Income (10k USD)", min_value=0.0, value=3.0, step=0.1)
@@ -45,6 +52,5 @@ st.subheader("Input Summary")
 st.write(input_data)
 
 if st.button("Predict Price"):
-    # model is already trained & loaded – just predict
     prediction = model.predict(input_data)[0]
     st.success(f"Predicted median house value: ${prediction * 100000:,.2f}")
